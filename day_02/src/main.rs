@@ -31,39 +31,39 @@ impl Round {
             'C' => Choice::Scissors,
             _ => return Err("Unexpected char for opponent")
         };
-        let player = match char_vec[2] {
-            'X' => Choice::Rock,
-            'Y' => Choice::Paper,
-            'Z' => Choice::Scissors,
+        let outcome = match char_vec[2] {
+            'X' => Outcome::Lose,
+            'Y' => Outcome::Draw,
+            'Z' => Outcome::Win,
             _ => return Err("Unexpected char for player")
         };
 
-        let outcome: Outcome = Round::outcome(&player, &opponent);
+        let player: Choice = Round::player_choice(&outcome, &opponent);
 
         Ok(Round { player, opponent, outcome })
     }
 
-    fn outcome(player: &Choice, opponent: &Choice) -> Outcome {
-        let res = match player {
-            Choice::Rock => {
+    fn player_choice(outcome: &Outcome, opponent: &Choice) -> Choice {
+        let res = match outcome {
+            Outcome::Lose => {
                 match opponent {
-                    Choice::Rock => Outcome::Draw,
-                    Choice::Paper => Outcome::Lose,
-                    Choice::Scissors => Outcome::Win,
+                    Choice::Rock => Choice::Scissors,
+                    Choice::Paper => Choice::Rock,
+                    Choice::Scissors => Choice::Paper,
                 }
             },
-            Choice::Paper => {
+            Outcome::Draw => {
                 match opponent {
-                    Choice::Rock => Outcome::Win,
-                    Choice::Paper => Outcome::Draw,
-                    Choice::Scissors => Outcome::Lose,
+                    Choice::Rock => Choice::Rock,
+                    Choice::Paper => Choice::Paper,
+                    Choice::Scissors => Choice::Scissors,
                 }
             },
-            Choice::Scissors => {
+            Outcome::Win => {
                 match opponent {
-                    Choice::Rock => Outcome::Lose,
-                    Choice::Paper => Outcome::Win,
-                    Choice::Scissors => Outcome::Draw,
+                    Choice::Rock => Choice::Paper,
+                    Choice::Paper => Choice::Scissors,
+                    Choice::Scissors => Choice::Rock,
                 }
             },
         };
