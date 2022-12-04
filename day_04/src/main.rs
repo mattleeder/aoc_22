@@ -14,9 +14,13 @@ fn main() {
         let second_lower = second[0].parse::<u32>().unwrap();
         let second_upper = second[1].parse::<u32>().unwrap();
 
-        if first_lower <= second_lower && first_upper >= second_upper {
+        if first_lower <= second_lower && first_upper >= second_lower {
             count += 1;
-        } else if second_lower <= first_lower && second_upper >= first_upper {
+        } else if first_lower <= second_upper && first_upper >= second_upper {
+            count += 1;
+        } else if second_lower <= first_lower && second_upper >= first_lower {
+            count += 1;
+        } else if second_lower <= first_upper && second_upper >= first_upper {
             count += 1;
         }
     }
