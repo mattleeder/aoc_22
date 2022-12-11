@@ -7,7 +7,7 @@ fn main() {
 
     let binding = utils::read_file().unwrap();
     let mut binding = binding.chars();
-    let contents: Vec<char> = (&mut binding).take(4).collect();
+    let contents: Vec<char> = (&mut binding).take(14).collect();
     let mut char_queue = Vec::new();
 
     for c in contents {
@@ -18,10 +18,10 @@ fn main() {
         char_queue.insert(0, c);
     }
 
-    let mut index = 4;
+    let mut index = 14;
 
     for c in binding {
-        if unique_count == 4 {
+        if unique_count == 14 {
             println!("Result: {}", index);
             break;
         }
