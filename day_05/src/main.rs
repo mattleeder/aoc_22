@@ -14,6 +14,7 @@ impl Containers {
     }
 
     fn read_command(&mut self, cmd: &str) {
+        let mut buffer = vec![];
         let mut instructions = cmd.split(' ');
         instructions.next();
         let mut instructions = instructions.step_by(2);
@@ -26,9 +27,12 @@ impl Containers {
 
         while index < amount {
             let container = self.stacks[origin].pop().expect("Cannot pop empty Vector");
-            self.stacks[destination].push(container);
+            buffer.push(container);
             index += 1;
         }
+        buffer.reverse();
+        self.stacks[destination].append(&mut buffer);
+
     }
 
 }
