@@ -1,6 +1,4 @@
 use common::utils;
-use std::borrow::BorrowMut;
-use std::mem::ManuallyDrop;
 use std::rc::{Rc, Weak};
 use std::collections::HashMap;
 use std::cell::RefCell;
@@ -33,7 +31,6 @@ impl TreeNode {
                     size: RefCell::new(size),
                 });
                 node.add_child(Rc::clone(&child));
-                println!("Made new node of type {:?} with size {:?}", child.item, *child.size.borrow());
                 return child
 
             },
@@ -55,7 +52,6 @@ impl TreeNode {
             ItemType::Dir => {},
             ItemType::File => {
                 *self.size.borrow_mut() += *child.size.borrow();
-                println!("Directory {} is now of size {}", self.name, *self.size.borrow());
             },
         };
         self.children.borrow_mut().insert(child.name.clone(), Rc::clone(&child));
@@ -67,27 +63,6 @@ impl TreeNode {
 
     fn get_parent(&self) -> Option<Rc<TreeNode>> {
         self.parent.upgrade()
-    }
-
-    fn get_subdirectory_size(&self) -> Vec<u32> {
-        let mut directory_size: u32 = 0;
-        let mut subdirectories : Vec<u32> = Vec::new();
-        
-        for child in self.children.borrow().values() {
-            let mut size: u32 = 0;
-            match child.item {
-                ItemType::File => {size += *child.size.borrow()},
-                ItemType::Dir => {
-                    let mut sub = child.get_subdirectory_size();
-                    size += sub.iter().sum::<u32>();
-                    subdirectories.append(&mut sub);
-                },
-            };
-            directory_size += size;
-        }
-
-        subdirectories.push(directory_size);
-        subdirectories
     }
 
     fn get_used_space(&self) -> u32 {
@@ -133,7 +108,6 @@ fn main() {
     let mut current: Rc<TreeNode> = Rc::clone(&root);
 
     for line in contents {
-        println!("File: {}", line);
         let info: Vec<&str> = line.split(' ').collect();
         if info[0] == "$"  {
             if info[1] == "ls" {
@@ -156,12 +130,11 @@ fn main() {
     }
 
     let arr = root.get_subdirectory_used_space();
-    println!("{:?}", arr);
-    let unused: u32 = 30_000_000 - (70_000_000 - root.get_used_space());
-    println!("{}", unused);
-    let arr = arr.into_iter().filter(|x| x >= &unused);
-    let ret = arr.min().unwrap();
+    let p1 = arr.clone().into_iter().filter(|x| x <= &100_000).sum::<u32>();
+    let unused_space: u32 = 30_000_000 - (70_000_000 - root.get_used_space());
+    let arr = arr.into_iter().filter(|x| x >= &unused_space);
+    let p2 = arr.min().unwrap();
 
-
-    println!("{}", ret);
+    println!("Part 1: {}", p1);
+    println!("Part 2: {}", p2);
 }
