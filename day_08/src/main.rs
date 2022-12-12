@@ -41,6 +41,68 @@ impl Grid {
 
         tot
     }
+
+    fn scenic_score(&self, row: usize, col: usize) -> u32 {
+        // Calculates the scenic score for the tree at row, col
+        let up = self.trees_visible(row, col, Direction::Up);
+        let down = self.trees_visible(row, col, Direction::Down);
+        let left = self.trees_visible(row, col, Direction::Left);
+        let right = self.trees_visible(row, col, Direction::Right);
+
+        up * down * left * right
+    }
+
+    fn trees_visible(&self, mut row: usize, mut col: usize, dir: Direction) -> u32 {
+        let mut visible = 0;
+        let height = self.data[row][col];
+        let rows = self.data.len();
+        let cols = self.data[0].len();
+
+        match dir {
+            Direction::Left => {
+                while col > 0 {
+                    visible += 1;
+                    if self.data[row][col - 1] >= height {
+                        break;
+                    } else {
+                        col -= 1;
+                    }
+                }
+            },
+            Direction::Right => {
+                while col < cols - 1 {
+                    visible += 1;
+                    if self.data[row][col + 1] >= height {
+                        break;
+                    } else {
+                        col += 1;
+                    }
+                }
+            },
+            Direction::Down => {
+                while row < rows - 1 {
+                    visible += 1;
+                    if self.data[row + 1][col] >= height {
+                        break;
+                    } else {
+                        row += 1;
+                    }
+                }
+            },
+            Direction::Up => {
+                while row > 0 {
+                    visible += 1;
+                    if self.data[row - 1][col] >= height {
+                        break;
+                    } else {
+                        row -= 1;
+                    }
+                }
+            }
+        }
+
+        visible
+    }
 }
 
 enum Direction {
@@ -155,4 +217,17 @@ fn main() {
    let res = grid.visible_trees();
 
    println!("Visible trees: {res}");
+
+   let mut high_score = 0_u32;
+
+   for row in 0..grid.data.len() {
+       for col in 0..grid.data[0].len() {
+           let score = grid.scenic_score(row, col);
+           if score > high_score {
+               high_score = score;
+           }
+       }
+   }
+
+   println!("Most scenic tree: {high_score}");
 }
