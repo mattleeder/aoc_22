@@ -90,6 +90,39 @@ impl TreeNode {
         subdirectories
     }
 
+    fn get_used_space(&self) -> u32 {
+        let mut used_space: u32 = 0;
+
+        for child in self.children.borrow().values() {
+            let mut size: u32 = 0;
+            match child.item {
+                ItemType::File => {size += *child.size.borrow()},
+                ItemType::Dir => {size += child.get_used_space()},
+            };
+            used_space += size;
+        }
+
+        used_space
+    }
+
+    fn get_subdirectory_used_space(&self) -> Vec<u32> {
+        let mut used_space: u32 = 0;
+        let mut subdirectories: Vec<u32> = Vec::new();
+
+        for child in self.children.borrow().values() {
+            match child.item {
+                ItemType::File => {used_space += *child.size.borrow()},
+                ItemType::Dir => {
+                    used_space += child.get_used_space();
+                    subdirectories.append(&mut child.get_subdirectory_used_space());
+                },
+            }
+        }
+
+        subdirectories.push(used_space);
+        subdirectories
+    }
+
 }
 
 fn main() {
@@ -122,9 +155,13 @@ fn main() {
         }
     }
 
-    let arr = root.get_subdirectory_size();
-    let tot = arr.into_iter().filter(|x| x <= &100_000_u32).sum::<u32>();
+    let arr = root.get_subdirectory_used_space();
+    println!("{:?}", arr);
+    let unused: u32 = 30_000_000 - (70_000_000 - root.get_used_space());
+    println!("{}", unused);
+    let arr = arr.into_iter().filter(|x| x >= &unused);
+    let ret = arr.min().unwrap();
 
 
-    println!("{}", tot);
+    println!("{}", ret);
 }
