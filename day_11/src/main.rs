@@ -3,12 +3,13 @@ use std::fmt;
 
 struct Monkey {
     id: u8,
-    items: Vec<u32>,                    // Items carried
-    operation: Box<dyn Fn(u32) -> u32>, // How worry is manuipulated
-    test: u32,                          // The boolean test divisor
+    items: Vec<u64>,                    // Items carried
+    operation: Box<dyn Fn(u64) -> u64>, // How worry is manuipulated
+    test: u64,                          // The boolean test divisor
     if_true: u8,                        // Id of Monkey to throw to if true
     if_false: u8,                       // Id of Monkey to throw to if false
-    throw_count: u16,
+    throw_count: u64,
+    threshold: u64,
 }
 
 impl Monkey {
@@ -16,9 +17,9 @@ impl Monkey {
         self.items.reverse();
     }
 
-    fn inspect_item(&mut self, item: u32) -> (u8, u32) {
+    fn inspect_item(&mut self, item: u64) -> (u8, u64) {
         let mut item = (self.operation)(item);
-        item = item / 3;
+        item = item % self.threshold;
         self.throw_count += 1;
         if item % self.test == 0 {
             return (self.if_true, item);
@@ -45,12 +46,13 @@ impl fmt::Display for Monkey {
 
 struct MonkeyReader {
     id: Option<u8>,
-    items: Option<Vec<u32>>,
-    operation: Option<Box<dyn Fn(u32) -> u32>>,
-    test: Option<u32>,
+    items: Option<Vec<u64>>,
+    operation: Option<Box<dyn Fn(u64) -> u64>>,
+    test: Option<u64>,
     if_true: Option<u8>,
     if_false: Option<u8>,
     monkeys: Vec<Monkey>,
+    test_vec: Vec<u64>,
 }
 
 impl MonkeyReader {
@@ -63,6 +65,7 @@ impl MonkeyReader {
             if_true: None,
             if_false: None,
             monkeys: Vec::new(),
+            test_vec: Vec::new(),
         }
     }
 
@@ -75,6 +78,7 @@ impl MonkeyReader {
             if_true: self.if_true.take().unwrap(),
             if_false: self.if_false.take().unwrap(),
             throw_count: 0,
+            threshold: 0,
         }
     }
 
@@ -103,7 +107,9 @@ impl MonkeyReader {
         } else if instruction.starts_with("Operation") {
             self.operation = Some(MonkeyReader::read_operation(line[1].trim()));
         } else if instruction.starts_with("Test") {
-            self.test = Some(MonkeyReader::read_test(line[1].trim()));
+            let test = MonkeyReader::read_test(line[1].trim());
+            self.test_vec.push(test);
+            self.test = Some(test.to_owned());
         } else if instruction.starts_with("If true") {
             self.if_true = Some(MonkeyReader::read_true_target(line[1].trim()));
         } else if instruction.starts_with("If false") {
@@ -120,25 +126,25 @@ impl MonkeyReader {
         n.parse::<u8>().unwrap()
     }
 
-    fn read_items(s: &str) -> Vec<u32> {
+    fn read_items(s: &str) -> Vec<u64> {
         s.trim()
             .split(", ")
-            .map(|item| item.parse::<u32>().unwrap())
+            .map(|item| item.parse::<u64>().unwrap())
             .collect()
     }
 
-    fn read_operation(s: &str) -> Box<dyn Fn(u32) -> u32> {
+    fn read_operation(s: &str) -> Box<dyn Fn(u64) -> u64> {
         let rhs = s.split("=").nth(1).unwrap().trim();
         let v: Vec<&str> = rhs.split(" ").collect();
         let left_arg = if v[0] == "old" {
-            0_u32
+            0_u64
         } else {
-            v[0].parse::<u32>().unwrap()
+            v[0].parse::<u64>().unwrap()
         };
         let right_arg = if v[2] == "old" {
-            0_u32
+            0_u64
         } else {
-            v[2].parse::<u32>().unwrap()
+            v[2].parse::<u64>().unwrap()
         };
         let op = match v[1] {
             "*" => MonkeyReader::mult,
@@ -161,24 +167,24 @@ impl MonkeyReader {
         }
     }
 
-    fn add(x: u32, y: u32) -> u32 {
+    fn add(x: u64, y: u64) -> u64 {
         x + y
     }
 
-    fn mult(x: u32, y: u32) -> u32 {
+    fn mult(x: u64, y: u64) -> u64 {
         x * y
     }
 
-    fn div(x: u32, y: u32) -> u32 {
+    fn div(x: u64, y: u64) -> u64 {
         x / y
     }
 
-    fn sub(x: u32, y: u32) -> u32 {
+    fn sub(x: u64, y: u64) -> u64 {
         x - y
     }
 
-    fn read_test(s: &str) -> u32 {
-        s.split(" ").last().unwrap().parse::<u32>().unwrap()
+    fn read_test(s: &str) -> u64 {
+        s.split(" ").last().unwrap().parse::<u64>().unwrap()
     }
 
     fn read_true_target(s: &str) -> u8 {
@@ -199,12 +205,19 @@ fn main() {
     let monkey = reader.create_monkey();
     reader.monkeys.push(monkey);
 
+    println!("Tests: {:?}", reader.test_vec);
+    let threshold = reader.test_vec.iter().product::<u64>();
+    println!("Tests product: {}", threshold);
     let mut monkey_vec: Vec<Monkey> = reader.get_monkeys();
     println!("MonkeyVec len: {}", monkey_vec.len());
 
-    for _ in 0..20 {
+    for i in 0..monkey_vec.len() {
+        monkey_vec[i].threshold = threshold;
+    }
+
+    for _ in 0..10_000 {
         for i in 0..monkey_vec.len() {
-            let mut v: Vec<(u8, u32)> = Vec::new();
+            let mut v: Vec<(u8, u64)> = Vec::new();
             monkey_vec[i].reverse_items();
             for j in 0..monkey_vec[i].items.len() {
                 let item = monkey_vec[i].items[j].to_owned();
@@ -219,14 +232,15 @@ fn main() {
         }
     }
 
-    let mut throws: Vec<u16> = Vec::new();
+    let mut throws: Vec<u64> = Vec::new();
     for i in 0..monkey_vec.len() {
         println!("Pushing Monkey {}: {}", i, monkey_vec[i].throw_count);
+        println!("Monkey holding items: {:?}", monkey_vec[i].items);
         throws.push(monkey_vec[i].throw_count);
     }
 
     throws.sort();
 
     println!("{:?}", throws);
-    println!("Part 1: {}", throws.last().unwrap() * throws[throws.len() - 2]);
+    println!("Part 2: {}", throws.last().unwrap() * throws[throws.len() - 2]);
 }
