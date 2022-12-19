@@ -12,8 +12,9 @@ struct BFS<'a> {
 
 impl BFS<'_> {
 
-    fn new(start: [i8; 2], grid: &Vec<Vec<i8>>) -> BFS {
-        let mut visited = HashSet::from([start]);
+    fn new(start: Vec<[i8; 2]>, grid: &Vec<Vec<i8>>) -> BFS {
+        let length = start.len();
+        let mut visited = HashSet::from_iter(start.clone());
         let rows = grid.len() as i8;
         let cols = grid[0].len() as i8;
         // Add the area around the grid to visited
@@ -27,11 +28,11 @@ impl BFS<'_> {
             visited.insert([rows, i]);
         }
         BFS {
-            queue: vec![start],
+            queue: start,
             visited,
             grid,
             count: 0_u16,
-            level_length: 1_usize,
+            level_length: length,
         }
     }
 
@@ -102,6 +103,7 @@ fn main() {
     let mut grid: Vec<Vec<i8>> = Vec::new();
     let mut start: [i8; 2] = [-1, -1];
     let mut end: [i8; 2] = [-1, -1];
+    let mut low_starts: Vec<[i8; 2]> = Vec::new();
 
     for (i, line) in contents.lines().enumerate() {
         let mut row: Vec<i8> = Vec::new();
@@ -110,17 +112,20 @@ fn main() {
                 start = [i as i8, j as i8];
             } else if c == 'E' {
                 end = [i as i8, j as i8];
+            } else if c == 'a' {
+                low_starts.push([i as i8, j as i8])
             }
             row.push(height_map.get(&c).expect("Could not find character in height_map").to_owned());
         }
         grid.push(row);
     }
 
-    let bfs = BFS::new(start, &grid);
+    low_starts.push(start.clone());
+    let bfs = BFS::new(low_starts, &grid);
 
     for (point, count) in bfs {
         if point == end {
-            println!("Part 1: {}", count);
+            println!("Part 2: {}", count);
         }
     }
     
