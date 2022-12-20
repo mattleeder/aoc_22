@@ -18,6 +18,14 @@ impl VecEntry {
 
 }
 
+impl Ord for VecEntry {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+impl Eq for VecEntry {}
+
 impl PartialOrd for VecEntry {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         // If both SubVec, ind == 10,
@@ -198,23 +206,23 @@ fn read_line(line: &str) -> Vec<VecEntry> {
 
 fn main() {
     let binding = utils::read_file().unwrap();
-    let mut contents = binding.lines();
-    let mut index = 1;
-    let mut tot = 0;
+    let contents = binding.lines();
 
-    while let (Some(first), Some(second)) =
-        (contents.next(), contents.next())
-    {
-        let v = read_line(first);
-        let u = read_line(second);
-
-        if v[0] <= u[0] {
-            tot += index;
+    let mut v: Vec<VecEntry> = contents.filter_map(|line| {
+        if line == "" {
+            None
+        } else {
+            let mut buffer = read_line(line);
+            Some(buffer.pop().unwrap())
         }
-        // Skip the blank lines
-        contents.next();
-        index += 1;
-    }
+    }).collect();
+    v.push(VecEntry::SubVec(vec![VecEntry::Num(2)]));
+    v.push(VecEntry::SubVec(vec![VecEntry::Num(6)]));
+    v.sort();
 
-    println!("Part 1: {}", tot);
+    let key_one = v.binary_search(&VecEntry::SubVec(vec![VecEntry::Num(2)])).unwrap() + 1;
+    let key_two = v.binary_search(&VecEntry::SubVec(vec![VecEntry::Num(6)])).unwrap() + 1;
+
+
+    println!("Part 2: {}", key_one * key_two);
 }
